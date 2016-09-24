@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+    	<meta charset="utf-8">
+    	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	<title>D3-lab1</title>
+    	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"> 
+      <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> 
+      <script>
+      window.onload=function(q){
+            var division=d3.select("#addlist"); 
+            d3.json("https://raw.githubusercontent.com/CristianFelix/infoviz/master/gapminder.json",function(error,result){
+                      var countryname=division.selectAll("li").data(result,function(q){
+                        return q.name;
+                      });
+                      countryname.enter()
+                      .append("li")
+                      .text(function(q) {
+                        return q.name;
+                      });
+                });
+            
+        };
+    </script>
+    	<style>
+    		.namelabel{
+    			font-family:Arial, Helvetica, sans-serif;
+    			font-size:18px;
+    		}
+    		#navhead{
+    			font-family:Arial, Helvetica, sans-serif;
+    			font-size:18px;
+    			text-align:center;
+    		}
+    		#heading{
+    			margin-top:9px;
+    		}
+    		.navbar-inverse{
+    			color:white;
+    		}
+        li{
+          list-style-type: none;
+        }
+    	</style>
+    </head>
+   	<body>
+   		<nav class="navbar navbar-inverse">
+   			<div class="container-fluid">
+     			<div id="navhead">
+     				<p id="heading">Gapiminder - Wealth and Health</p>
+     			</div>
+   			</div>
+		</nav>
+   	<!--<div class="container">
+			<div class="row">
+				<div class="col-md-12" id="topRow">
+					<h2>Countries</h2><br>
+					<label for="name" class="namelabel">Name:&nbsp &nbsp</label><input type="text" id="add"> &nbsp
+				  	<button type="button" onclick="addItem()">Add</button>
+			 	</div>
+     	</div>
+		</div>
+		<hr> -->
+    <div class="container-fluid">
+      <div class="row">
+		    <div id="addlist" class="col-md-4">
+            <h2>Countries</h2>
+            <ul id="countries">
+            </ul>
+        </div>
+      </div>
+    </div>
+		<!--<script type="text/javascript">
+			function addItem(){
+	        	var li = document.createElement("LI");  
+	        	var input = document.getElementById("add");
+	        	li.innerHTML = input.value;
+	        	input.value = "";
+				document.getElementById("addlist").appendChild(li);
+    		}
+		</script> -->
+   	</body>
+</html>
