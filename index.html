@@ -1,86 +1,212 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 	<head>
-    	<meta charset="utf-8">
-    	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-    	<meta name="viewport" content="width=device-width, initial-scale=1">
-    	<title>D3-lab1</title>
-    	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"> 
-      <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> 
-      <script>
-      window.onload=function(q){
-            var division=d3.select("#addlist"); 
-            d3.json("https://raw.githubusercontent.com/CristianFelix/infoviz/master/gapminder.json",function(error,result){
-                      var countryname=division.selectAll("li").data(result,function(q){
-                        return q.name;
-                      });
-                      countryname.enter()
-                      .append("li")
-                      .text(function(q) {
-                        return q.name;
-                      });
-                });
-            
-        };
-    </script>
-    	<style>
-    		.namelabel{
-    			font-family:Arial, Helvetica, sans-serif;
-    			font-size:18px;
-    		}
-    		#navhead{
-    			font-family:Arial, Helvetica, sans-serif;
-    			font-size:18px;
-    			text-align:center;
-    		}
-    		#heading{
-    			margin-top:9px;
-    		}
-    		.navibar{
-    			color:white;
-			background-color:black;
-    		}
-        li{
-          list-style-type: none;
-        }
-    	</style>
+    	<title>D3 Lab</title>
+      	<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+      	<style>
+      		body{
+      			margin:0;
+      			font-family: "Arial";
+      		}
+      		h1{
+      			margin:0;
+      		}
+      		#title{
+      			background-color: black;
+      			color:white;
+      			padding:10px; 
+      		}
+      		.countryList{
+      			list-style-type: none;
+      			float:left; 
+      		}
+      		circle{
+      			opacity: 0.7;
+      		}
+          
+      		#viz{
+      			margin-left: 25px;
+      			margin-right:20px;
+      		}
+      		.domain{
+      			fill:none;
+      			stroke:#000;
+      		}
+      		.tick{
+      			font-size: 12px;
+      		}
+      		.tick line{
+      			stroke: #ccc;
+      		}
+          #tooltip{
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            top:0;
+            left:0;
+            padding:8px;
+            border: solid  1px black; 
+            visibility: hidden;
+            transition: all 0.5s;
+            opacity: 0;
+          }
+      	</style>
     </head>
-   	<body>
-   		<div class="navibar">
-   			<div class="container-fluid">
-     			<div id="navhead">
-     				<p id="heading">Gapiminder - Wealth and Health</p>
-     			</div>
-   			</div>
-		</div>
-   	<!--<div class="container">
-			<div class="row">
-				<div class="col-md-12" id="topRow">
-					<h2>Countries</h2><br>
-					<label for="name" class="namelabel">Name:&nbsp &nbsp</label><input type="text" id="add"> &nbsp
-				  	<button type="button" onclick="addItem()">Add</button>
-			 	</div>
-     	</div>
-		</div>
-		<hr> -->
-    <div class="container-fluid">
-      <div class="row">
-		    <div id="addlist" class="col-md-4">
-            <h2>Countries</h2>
-            <ul id="countries">
-            </ul>
-        </div>
-      </div>
-    </div>
-		<!--<script type="text/javascript">
-			function addItem(){
-	        	var li = document.createElement("LI");  
-	        	var input = document.getElementById("add");
-	        	li.innerHTML = input.value;
-	        	input.value = "";
-				document.getElementById("addlist").appendChild(li);
+
+    <body>
+    	<div id="title">
+    		<h1>Gapiminder - Wealth and Health of Nations</h1>
+    	</div>
+    	<div>
+    		<ul class="countryList" id="countryList"></ul>
+    		<svg id="viz">
+    		</svg>
+    	</div>
+ 
+      <input type="range" id="yearSelect" min="1900" max="2009" value="2008" style="width:800px" onchange="setYear(this.value)">
+      
+      <div id="tooltip">Tooltip</div>
+      <script>
+    		var year=2008;
+    		var chartWidth=800;
+    		var chartHeight=500;
+    		var chartMargin={top:20, left:30, bottom:20, right:20};
+    		var chartInnerWidth=chartWidth - chartMargin.left - chartMargin.right;
+    		var chartInnerHeight=chartHeight - chartMargin.top - chartMargin.bottom;
+        var data=[];
+    		var list=d3.select("#countryList");
+    		var chart=d3.select("#viz");
+        var yearLabel=chart.append("text")
+                        .text(year)
+                        .style({"font-size": 50, fill: "#ccc"})
+                        .attr("dx", 50)
+                        .attr("dy", 70)
+    		var xAxisGroup=chart.append("g")
+    			.attr("transform", "translate("
+    				+ chartMargin.left 
+    				+ "," 
+    				+ (chartInnerHeight + chartMargin.top) + ")");
+    		var yAxisGroup=chart.append("g")
+    			.attr("transform", "translate("
+    				+ chartMargin.left 
+    				+ "," 
+    				+ chartMargin.top + ")");
+    			
+    		var dotGroup=chart.append("g")
+    			.attr("transform", "translate("+ chartMargin.left + "," + chartMargin.top + ")");
+        function highlight(name){
+          dotGroup.selectAll("circle")
+            .style("stroke", function(d, i){ 
+                return d.name == name ? "black" : undefined
+            });
+          list.selectAll("li")
+            .style("background-color", function(d, i){ 
+                return d.name == name ? "black" : undefined
+            })
+            .style("color", function(d, i){ 
+                return d.name == name ? "white" : undefined
+            })
+          
+        }
+        function unhighlight(){
+          dotGroup.selectAll("circle").style("stroke", undefined)
+          list.selectAll("li")
+            .style("background-color", undefined)
+            .style("color", undefined)
+          
+        }
+        function setYear(newYear){
+          year=newYear;
+          yearLabel.text(year);
+          render(data);
+        }
+    		function renderList(data){
+    			var selection=list.selectAll("li")
+    			.data(data, function(d){ return d.name});
+    			selection.enter()
+    			.append("li")
+    			.attr("Class", "listItem")
+    			.text(function(d){return d.name})
+          .on("mouseenter", function(d){
+            highlight(d.name)
+          })
+          .on("mouseleave", function(d){
+            unhighlight()
+          })
+          selection.exit().remove();
     		}
-		</script> -->
-   	</body>
+    		function renderChart(data){
+    			chart
+    				.attr("width", chartWidth)
+    				.attr("height", chartHeight)
+    			var xScale=d3.scale.linear()
+    				.range([0, chartInnerWidth])
+    				.domain([-1000, d3.max(data, function(d){return d.income[year]})]);
+    			var yScale=d3.scale.linear()
+    				.range([chartInnerHeight, 0])
+    				.domain(d3.extent(data, function(d){return d.lifeExpectancy[year]}));
+    			var sScale=d3.scale.linear()
+    				.range([20, 1000])
+    				.domain(d3.extent(data, function(d){return d.population[year]}));
+    			var cScale= d3.scale.category10();
+    			var xAxis=d3.svg.axis()
+    				.tickSize(-460)
+            .tickFormat(function(d){
+              var prefix=d3.formatPrefix(d);
+              return prefix.scale(d)+prefix.symbol
+            })
+    				.scale(xScale)
+    				.orient("bottom")
+    			var yAxis=d3.svg.axis()
+    				.tickSize(-750)
+    				.scale(yScale)
+    				.orient("left")
+    			xAxisGroup.call(xAxis);
+    			yAxisGroup.call(yAxis);
+    			var selection=dotGroup.selectAll("circle")
+    				  .data(data, function(d){return d.name;});
+    				  selection.enter()
+    				          .append("circle")
+    		              .on("click", function(d){
+                            alert(d.name);
+                      })
+              .on('mouseenter', function(d){
+                  highlight(d.name);
+                  d3.select("#tooltip").style({
+                    visibility: "visible",
+                    top: d3.event.clientY+"px",
+                    left: d3.event.clientX+"px",
+                    opacity: 1
+                  }).text(d.name)
+                  //console.log(d3.event.clientY);
+                  //console.log(d3.event.clientX);
+              })
+              .on('mouseleave', function(d){
+                  unhighlight(d.name);
+                  d3.select("#tooltip").style({
+                    visibility: "hidden"
+                  })
+              })
+          selection.exit().remove();
+          selection.transition()
+              .attr("r", function(d){return Math.sqrt(sScale(d.population[year])/Math.PI)})
+              .attr("cx", function(d){return xScale(d.income[year])})
+              .attr("cy", function(d){return yScale(d.lifeExpectancy[year])})
+              .attr("fill", function(d){return cScale(d.region)})
+    		}
+    		function render(data){
+    			var filteredData= data.filter(function(d){
+    				return d.income[year] != undefined && d.lifeExpectancy[year] != undefined && d.population[year] != undefined;
+    			});
+          filteredData.sort(function(a, b){
+              return d3.ascending(a.name, b.name)
+          });
+    			renderList(filteredData);
+    			renderChart(filteredData);
+    		}
+    		d3.json("https://raw.githubusercontent.com/CristianFelix/infoviz/master/Week%203/newData.json", function(error, result){
+          data=result;
+    			render(result);
+    		});
+    	</script>
+    </body>
 </html>
